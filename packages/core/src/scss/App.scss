@@ -74,3 +74,43 @@
 // =============================================================================
 
 @import "layouts/layouts";
+
+// custom created
+#freight-custom {
+	padding-bottom: 1rem;
+}
+
+#freight-custom textarea {
+	width: 100%;
+	resize: none;
+}
+
+#freight-custom .flex-centered {
+	display: flex;
+	align-items: center;
+	padding-left: 1rem;
+}
+
+#freight-custom .flex-centered > label {
+	margin-left: 5px;
+	line-height: 18px;
+}
+
+#freight-custom .input-container {
+	display: none;
+}
+
+#freight-custom input[type="radio"]:checked + .input-container {
+	display: block;
+}
+
+#freight-custom-preview {
+	white-space: pre-wrap;
+	border-top: #dddddd 1px solid;
+	margin-top: 0.75rem;
+	padding-top: 0.75rem;
+}
+
+#freight-custom-preview .text-red {
+	color: red;
+}

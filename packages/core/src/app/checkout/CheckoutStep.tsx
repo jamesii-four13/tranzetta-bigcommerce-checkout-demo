@@ -68,7 +68,7 @@ export default class CheckoutStep extends Component<CheckoutStepProps, CheckoutS
         return (
             <li
                 className={classNames('checkout-step', 'optimizedCheckout-checkoutStep', {
-                    [`test checkout-step--${type}`]: !!type,
+                    [`checkout-step--${type}`]: !!type,
                 })}
                 ref={this.containerRef}
             >
@@ -117,7 +117,7 @@ export default class CheckoutStep extends Component<CheckoutStepProps, CheckoutS
                             className="checkout-view-content"
                             ref={this.contentRef}
                         >
-                            {isActive ? 'children' : null}
+                            {isActive ? children : null}
                         </div>
                     </CSSTransition>
                 )}

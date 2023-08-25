@@ -2,10 +2,13 @@ import { ShippingOption } from '@bigcommerce/checkout-sdk';
 import React, { FunctionComponent, memo, useCallback } from 'react';
 
 import { EMPTY_ARRAY } from '../../common/utility';
+import ShippingMethodQuestionaire from '../../custom/shipping/ShippingMethodQuestionaire';
 import { Checklist, ChecklistItem } from '../../ui/form';
 import { LoadingOverlay } from '../../ui/loading';
 
 import StaticShippingOption from './StaticShippingOption';
+
+const FREIGHT_SHIPPING_ID = 'b38f3865f43176c6f3cb22e64011048f';
 
 interface ShippingOptionListItemProps {
     consignmentId: string;
@@ -27,6 +30,7 @@ const ShippingOptionListItem: FunctionComponent<ShippingOptionListItemProps> = (
 
     return (
         <ChecklistItem
+            content={shippingOption.id === FREIGHT_SHIPPING_ID ? <ShippingMethodQuestionaire /> : null}
             htmlId={`shippingOptionRadio-${consignmentId}-${shippingOption.id}`}
             label={renderLabel}
             value={shippingOption.id}

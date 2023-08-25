@@ -412,6 +412,8 @@ class Checkout extends Component<
     private renderShippingStep(step: CheckoutStepStatus): ReactNode {
         const { hasCartChanged, cart, consignments = [] } = this.props;
 
+        console.log(consignments, 'consignments')
+
         const { isBillingSameAsShipping, isMultiShippingMode } = this.state;
 
         if (!cart) {
