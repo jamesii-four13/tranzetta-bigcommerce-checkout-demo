@@ -56,7 +56,8 @@ class ShippingOptionsForm extends PureComponent<
             isLoading,
             shouldShowShippingOptions,
             invalidShippingMessage,
-            methodId
+            methodId,
+            questionaires
         } = this.props;
 
         if (!consignments?.length || !shouldShowShippingOptions) {
@@ -90,6 +91,7 @@ class ShippingOptionsForm extends PureComponent<
                             inputName={getRadioInputName(consignment.id)}
                             isLoading={isLoading(consignment.id)}
                             onSelectedOption={selectShippingOption}
+                            questionaires={questionaires}
                             selectedShippingOptionId={
                                 consignment.selectedShippingOption &&
                                 consignment.selectedShippingOption.id

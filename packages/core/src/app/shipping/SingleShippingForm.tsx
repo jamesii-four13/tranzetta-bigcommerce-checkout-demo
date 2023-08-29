@@ -27,6 +27,7 @@ import {
     mapAddressFromFormValues,
     mapAddressToFormValues,
 } from '../address';
+import { ShippingMethodQuestionaires } from '../checkout/Checkout';
 import { getCustomFormFieldsValidationSchema } from '../formFields';
 import { Fieldset, Form } from '../ui/form';
 
@@ -64,6 +65,7 @@ export interface SingleShippingFormProps {
         address: Partial<Address>,
         options?: RequestOptions<CheckoutParams>,
     ): Promise<CheckoutSelectors>;
+    questionaires: ShippingMethodQuestionaires[]
 }
 
 export interface SingleShippingFormValues {
@@ -142,6 +144,7 @@ class SingleShippingForm extends PureComponent<
             values: { shippingAddress: addressForm },
             isShippingStepPending,
             isFloatingLabelEnabled,
+            questionaires
         } = this.props;
 
         const { isResettingAddress, isUpdatingShippingData, hasRequestedShippingOptions } =
@@ -187,6 +190,7 @@ class SingleShippingForm extends PureComponent<
                     cartHasChanged={cartHasChanged}
                     isLoading={isLoading || isUpdatingShippingData}
                     isMultiShippingMode={false}
+                    questionaires={questionaires}
                     shouldDisableSubmit={this.shouldDisableSubmit()}
                     shouldShowOrderComments={shouldShowOrderComments}
                     shouldShowShippingOptions={isValid}

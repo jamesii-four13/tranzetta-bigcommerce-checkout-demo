@@ -1,3 +1,4 @@
+import { ShippingMethodQuestionaires } from './Checkout';
 import CheckoutStepType from './CheckoutStepType';
 
 export default interface CheckoutStepStatus {
@@ -7,4 +8,5 @@ export default interface CheckoutStepStatus {
     isEditable: boolean;
     isRequired: boolean;
     type: CheckoutStepType;
+    questionaires: ShippingMethodQuestionaires[]
 }

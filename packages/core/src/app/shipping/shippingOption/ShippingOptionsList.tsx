@@ -1,6 +1,7 @@
 import { ShippingOption } from '@bigcommerce/checkout-sdk';
 import React, { FunctionComponent, memo, useCallback } from 'react';
 
+import { ShippingMethodQuestionaires } from '../../checkout/Checkout';
 import { EMPTY_ARRAY } from '../../common/utility';
 import ShippingMethodQuestionaire from '../../custom/shipping/ShippingMethodQuestionaire';
 import { Checklist, ChecklistItem } from '../../ui/form';
@@ -8,16 +9,16 @@ import { LoadingOverlay } from '../../ui/loading';
 
 import StaticShippingOption from './StaticShippingOption';
 
-const FREIGHT_SHIPPING_ID = 'b38f3865f43176c6f3cb22e64011048f';
-
 interface ShippingOptionListItemProps {
     consignmentId: string;
     shippingOption: ShippingOption;
+    questionaires: ShippingMethodQuestionaires[];
 }
 
 const ShippingOptionListItem: FunctionComponent<ShippingOptionListItemProps> = ({
     consignmentId,
     shippingOption,
+    questionaires
 }) => {
     const renderLabel = useCallback(
         () => (
@@ -28,9 +29,11 @@ const ShippingOptionListItem: FunctionComponent<ShippingOptionListItemProps> = (
         [shippingOption],
     );
 
+    const data = questionaires.find(({ shippingOptionId }) => shippingOptionId === shippingOption.id)
+
     return (
         <ChecklistItem
-            content={shippingOption.id === FREIGHT_SHIPPING_ID ? <ShippingMethodQuestionaire /> : null}
+            content={data ? <ShippingMethodQuestionaire questions={data?.questions} shippingId={shippingOption.id} /> : null}
             htmlId={`shippingOptionRadio-${consignmentId}-${shippingOption.id}`}
             label={renderLabel}
             value={shippingOption.id}
@@ -45,6 +48,7 @@ export interface ShippingOptionListProps {
     selectedShippingOptionId?: string;
     shippingOptions?: ShippingOption[];
     onSelectedOption(consignmentId: string, shippingOptionId: string): void;
+    questionaires: ShippingMethodQuestionaires[];
 }
 
 const ShippingOptionsList: FunctionComponent<ShippingOptionListProps> = ({
@@ -54,6 +58,7 @@ const ShippingOptionsList: FunctionComponent<ShippingOptionListProps> = ({
     shippingOptions = EMPTY_ARRAY,
     selectedShippingOptionId,
     onSelectedOption,
+    questionaires
 }) => {
     const handleSelect = useCallback(
         (value: string) => {
@@ -78,6 +83,7 @@ const ShippingOptionsList: FunctionComponent<ShippingOptionListProps> = ({
                     <ShippingOptionListItem
                         consignmentId={consignmentId}
                         key={shippingOption.id}
+                        questionaires={questionaires}
                         shippingOption={shippingOption}
                     />
                 ))}

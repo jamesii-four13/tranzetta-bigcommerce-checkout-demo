@@ -19,6 +19,7 @@ import React from 'react';
 import { withLanguage, WithLanguageProps } from '@bigcommerce/checkout/locale';
 
 import { usePayPalConnectAddress } from '../address/PayPalAxo';
+import { ShippingMethodQuestionaires } from '../checkout/Checkout';
 
 import MultiShippingForm, { MultiShippingFormValues } from './MultiShippingForm';
 import SingleShippingForm, { SingleShippingFormValues } from './SingleShippingForm';
@@ -60,6 +61,7 @@ export interface ShippingFormProps {
         address: Partial<Address>,
         options: RequestOptions<CheckoutParams>,
     ): Promise<CheckoutSelectors>;
+    questionaires: ShippingMethodQuestionaires[]
 }
 
 const ShippingForm = ({
@@ -96,6 +98,7 @@ const ShippingForm = ({
     updateAddress,
     isShippingStepPending,
     isFloatingLabelEnabled,
+    questionaires
 }: ShippingFormProps & WithLanguageProps) => {
     const { isPayPalAxoEnabled, mergedBcAndPayPalConnectAddresses } = usePayPalConnectAddress();
     const shippingAddresses = isPayPalAxoEnabled ? mergedBcAndPayPalConnectAddresses : addresses;
@@ -146,6 +149,7 @@ const ShippingForm = ({
             methodId={methodId}
             onSubmit={onSingleShippingSubmit}
             onUnhandledError={onUnhandledError}
+            questionaires={questionaires}
             shippingAddress={shippingAddress}
             shouldShowOrderComments={shouldShowOrderComments}
             shouldShowSaveAddress={shouldShowSaveAddress}

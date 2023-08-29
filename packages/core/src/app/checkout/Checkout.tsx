@@ -26,6 +26,7 @@ import { EmptyCartMessage } from '../cart';
 import { withCheckout } from '../checkout';
 import { CustomError, ErrorLogger, ErrorModal, isCustomError } from '../common/error';
 import { retry } from '../common/utility';
+import getShippingMethodsQuestion from '../custom/api/getShippingMethodQuestions';
 import {
     CheckoutButtonContainer,
     CheckoutSuggestion,
@@ -120,6 +121,27 @@ export interface CheckoutState {
     hasSelectedShippingOptions: boolean;
     isHidingStepNumbers: boolean;
     isSubscribed: boolean;
+    questionaires: ShippingMethodQuestionaires[];
+}
+export interface ShippingMethodQuestionaires {
+    _id: string;
+    shippingOptionId: string;
+    questions: Questionaires[]
+}
+export interface Questionaires {
+    _id: string;
+    label: string;
+    type: string;
+    productType: string;
+    options?: QuestionairesOption[]
+}
+
+export interface QuestionairesOption {
+    label: string;
+    type: string;
+    _id: string;
+    limit?: number;
+    productId?: string;
 }
 
 export interface WithCheckoutProps {
@@ -161,6 +183,7 @@ class Checkout extends Component<
         hasSelectedShippingOptions: false,
         isHidingStepNumbers: true,
         isSubscribed: false,
+        questionaires: []
     };
 
     private embeddedMessenger?: EmbeddedCheckoutMessenger;
@@ -198,7 +221,7 @@ class Checkout extends Component<
                     ] as any, // FIXME: Currently the enum is not exported so it can't be used here.
                 },
             });
-            const { links: { siteLink = '' } = {} } = data.getConfig() || {};
+            const { links: { siteLink = '' } = {}, storeProfile } = data.getConfig() || {};
             const errorFlashMessages = data.getFlashMessages('error') || [];
 
             if (errorFlashMessages.length) {
@@ -253,6 +276,17 @@ class Checkout extends Component<
                 isSubscribed: defaultNewsletterSignupOption,
             });
 
+            
+            
+            if (storeProfile) {
+                console.log(this.props, 'this.propsthis.propsthis.props')
+
+                const data = await getShippingMethodsQuestion(storeProfile.storeHash);
+
+                this.setState({ questionaires: data })
+            }
+
+            
             if (isMultiShippingMode) {
                 this.setState({ isMultiShippingMode }, this.handleReady);
             } else {
@@ -337,6 +371,7 @@ class Checkout extends Component<
                                         ? activeStepType === step.type
                                         : defaultStepType === step.type,
                                     isBusy: isPending,
+                                    questionaires: this.state.questionaires
                                 }),
                             )}
                     </ol>
@@ -411,8 +446,6 @@ class Checkout extends Component<
 
     private renderShippingStep(step: CheckoutStepStatus): ReactNode {
         const { hasCartChanged, cart, consignments = [] } = this.props;
-
-        console.log(consignments, 'consignments')
 
         const { isBillingSameAsShipping, isMultiShippingMode } = this.state;
 

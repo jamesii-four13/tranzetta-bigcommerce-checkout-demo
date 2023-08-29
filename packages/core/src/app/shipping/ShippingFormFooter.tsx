@@ -4,6 +4,7 @@ import React, { FunctionComponent, useEffect } from 'react';
 import { ExtensionRegionContainer, useExtensions } from '@bigcommerce/checkout/checkout-extension';
 import { TranslatedString } from '@bigcommerce/checkout/locale';
 
+import { ShippingMethodQuestionaires } from '../checkout/Checkout';
 import { OrderComments } from '../orderComments';
 import { Alert, AlertType } from '../ui/alert';
 import { Button, ButtonVariant } from '../ui/button';
@@ -18,6 +19,7 @@ export interface ShippingFormFooterProps {
     shouldShowShippingOptions?: boolean;
     shouldDisableSubmit: boolean;
     isLoading: boolean;
+    questionaires: ShippingMethodQuestionaires[];
 }
 
 const ShippingFormFooter: FunctionComponent<ShippingFormFooterProps> = ({
@@ -27,6 +29,7 @@ const ShippingFormFooter: FunctionComponent<ShippingFormFooterProps> = ({
     shouldShowShippingOptions = true,
     shouldDisableSubmit,
     isLoading,
+    questionaires
 }) => {
     const { extensionService, isExtensionEnabled } = useExtensions();
     const isExtensionRegionEnabled = Boolean(
@@ -73,6 +76,7 @@ const ShippingFormFooter: FunctionComponent<ShippingFormFooterProps> = ({
                 <ShippingOptions
                     isMultiShippingMode={isMultiShippingMode}
                     isUpdatingAddress={isLoading}
+                    questionaires={questionaires}
                     shouldShowShippingOptions={shouldShowShippingOptions}
                 />
             </Fieldset>

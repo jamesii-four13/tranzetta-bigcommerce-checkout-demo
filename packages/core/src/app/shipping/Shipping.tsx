@@ -137,6 +137,8 @@ class Shipping extends Component<ShippingProps & WithCheckoutShippingProps, Ship
             isInitializing,
         } = this.state;
 
+        console.log(step, 'ReactNodeReactNodeReactNode')
+
         if (providerWithCustomCheckout === PaymentMethodId.StripeUPE && !customer.email && this.props.countries.length > 0) {
             return <StripeShipping
                 { ...shippingFormProps }
@@ -177,6 +179,7 @@ class Shipping extends Component<ShippingProps & WithCheckoutShippingProps, Ship
                         onMultiShippingSubmit={this.handleMultiShippingSubmit}
                         onSingleShippingSubmit={this.handleSingleShippingSubmit}
                         onUseNewAddress={this.handleUseNewAddress}
+                        questionaires={step.questionaires}
                         shouldShowSaveAddress={!isGuest}
                         updateAddress={updateShippingAddress}
                     />

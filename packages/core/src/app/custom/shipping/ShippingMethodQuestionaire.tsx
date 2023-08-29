@@ -1,117 +1,239 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 
-const QUESTIONS = {
-    isShippingCommercialOrResidential : 'Is your shipping address commercial or residential?',
-    requiresLifeGate : 'Do you require a lift gate?',
-    requiresDeliveryAppointment: 'Do you require a delivery appointment?',
-    deliveryAppointmentContactInformation: 'Delivery Appointment Contact Information',
-    whatAreYourReceivingDaysAndHours: 'What are your receiving days and hours?'
+import { CheckoutContextProps } from '@bigcommerce/checkout/payment-integration-api';
+
+import { withCheckout } from '../../checkout';
+
+import InputForm from "./Form/Form";
+
+const getCustomerMessage = (messages: string) => {
+	const messageLines = messages.split('\n');
+	const data: any = {};
+
+	messageLines.forEach(line => {
+		const [key, value] = line.split(':').map(item => item.trim());
+
+		if (key) {
+			data[key] = value;
+		}
+	});
+
+	return data;
 };
 
-const ShippingMethodQuestionaire = () => {
-	const [state, setState] = useState({});
+const PRODUCT_TYPE: any = {
+	digital: 'digitalItems',
+	giftCertificate: 'giftCertificates',
+	customItems: 'customItems',
+	physicalItems: 'physicalItems'
+};
 
-	const handleInputChanged = (e: any) => {
-		console.log(e.target.name)
-		console.log(state)
-		console.log(setState)
+const combineMessage = (data: any) => {
+	return Object.entries(data)
+		.map(([key, value]) => `${key}: ${value}`)
+		.join('\n')
+		.trim();
+};
+
+const ShippingMethodQuestionaire = (props: any) => {
+	console.log(props, 'PROPS')
+
+	const [state, setState] = useState<any>(getCustomerMessage(props.checkout.customerMessage));
+
+	const onStateChanged = async (e: any) => {
+		const key = e.target.name;
+		const value = e.target.value;
+
+		setState({
+			...state,
+			[key] : value
+		});
 	};
+
+	const addToCart = async ({ cartId, data } : { cartId: number; data: any }) => {
+		const response = await fetch(`/api/storefront/carts/${cartId}/items`, {
+			credentials: 'include',
+			method: 'POST',
+			headers: {
+				'Content-Type': 'application/json',
+			},
+			body: JSON.stringify(data),
+		});
+
+		const responseData = await response.json();
+
+		return responseData;
+	};
+
+	const removeItemCart = async ({ cartId, itemId } : { cartId: number; itemId: number }) => {
+		const response = await fetch(`/api/storefront/carts/${cartId}/items/${itemId}`, {
+			credentials: 'include',
+			method: 'DELETE',
+		});
+
+		const responseData = await response.json();
+
+		return responseData;
+	};
+
+	const updateCartItem = async({ cartId, itemId, data } : { cartId: number; itemId: number; data: any }) => {
+		const response = await fetch(`/api/storefront/carts/${cartId}/items/${itemId}`, {
+			credentials: 'include',
+			method: 'PUT',
+			body: JSON.stringify({ lineItem: data }),
+		});
+
+		const responseData = await response.json();
+
+		return responseData;
+	};
+
+	const handleQuantity = async () => {
+		const promises: Array<Promise<any>> = [];
+
+		const _data: any = props.questions.filter((i: any) => !!i.productType);
+
+		_data.forEach((i: any) => {
+			if(i.productType && i.options) {
+				i.options.filter((i: any) => i.productId).forEach((option: any) => {
+					const _product = props.cart.lineItems[PRODUCT_TYPE[i.productType]].find(({ productId } : { productId: number }) => productId === Number(option.productId));
+
+					if (_product && option.limit && _product.quantity > option.limit) {
+						promises.push(updateCartItem({ 
+							cartId: props.cart.id, 
+							itemId: _product.id, 
+							data: { 
+								productId: Number(option.productId),
+								quantity: 1
+							} 
+						}));
+					}
+				})
+			}
+		});
+	
+		if (promises.length) {
+			try {
+				await Promise.all(promises);
+				await props.loadCheckout();
+			} catch(err) {
+				console.log('ERROR', err);
+			}
+		}
+	};
+
+	const updateCartSummary = async () => {
+		const cart = props.cart;
+
+		if (cart) {
+			const promises: Array<Promise<any>> = [];
+
+			for (const [key, value] of Object.entries(state)) {
+				const _data = props.questions.find((i: any) => i._id === key);
+
+				if (_data && !!_data.productType && _data.options) {
+					const _option: any = _data.options.find((i: any) => i._id === value);
+
+					if (_option) {
+						const _product = cart.lineItems[PRODUCT_TYPE[_data.productType]].find(({ productId } : { productId: number }) => productId === Number(_option.productId));
+
+						if (Number(_option.productId) && !_product) {
+							promises.push(addToCart({ 
+								cartId: cart.id, 
+								data: { 
+									lineItems: [{ 
+										productId: Number(_option.productId), 
+										quantity: _option.limit 
+									}]
+								}
+							}));
+						} else if(!Number(_option.productId)) {
+							const productIdsToRemove = _data.options.filter((i: any) => i._id !== value).map((i: any) => Number(i.productId));
+	
+							productIdsToRemove.forEach((id: any) => {
+								const __product = cart.lineItems[PRODUCT_TYPE[_data.productType]].find(({ productId } : { productId: number }) => productId === id);
+								
+								if (id && __product) {
+									promises.push(removeItemCart({ 
+										cartId: cart.id, 
+										itemId: __product.id
+									}));
+								}
+							})
+						}
+					}
+				}
+			}
+
+			try {
+				if (promises.length) {
+					await Promise.all(promises);
+				}
+			} catch (error) {
+				console.log(error, 'err')
+			} finally {
+				if (combineMessage(state) !== props.checkout.customerMessage) {
+					await props.updateCheckout({
+						customerMessage: combineMessage(state)
+					});
+				}
+
+				await props.loadCheckout();
+			}
+		}
+	};
+
+	useEffect(() => {
+		if (Object.keys(state).length) {
+			updateCartSummary();		
+		}
+	}, [state])
+
+	useEffect(() => {
+		if (props.cart) {
+			handleQuantity();
+		}
+	}, [props.cart.id])
+
 
 	return <>
 		<div id="freight-custom">
-            <div className="form-field" >
-                <div className="form-label optimizedCheckout-form-label">
-                    <strong>{QUESTIONS.isShippingCommercialOrResidential}</strong>
-                </div>
-                <div className="flex-centered">
-                    <input
-                        id="commercial" 
-                        name="shipping_address_type" 
-                        onChange={handleInputChanged}
-                        type="radio"
-						value="commercial"
-                    />
-                    <label htmlFor="commercial">Commercial</label>
-                </div>
-                <div className="flex-centered">
-                    <input 
-                        id="residential" 
-                        name="shipping_address_type" 
-                        type="radio" 
-                        value="residential"
-                    />
-                    <label htmlFor="residential">Residential</label>
-                </div>
-            </div>
-            <div className="form-field" >
-                <div className="form-label optimizedCheckout-form-label">
-                    <strong>{QUESTIONS.requiresLifeGate}</strong>
-                </div>
-                <div className="flex-centered">
-                    <input 
-                        id="yes_lift_gate" 
-                        name="require_lift_gate" 
-                        type="radio"
-                        value="yes"
-                    />
-                    <label htmlFor="yes_lift_gate">Yes (I do not have a forklift or loading dock to get a pallet off a semi-truck)</label>
-                </div>
-                <div className="flex-centered">
-                    <input 
-                        id="no_lift_gate" 
-                        name="require_lift_gate" 
-                        type="radio" 
-                        value="no"
-                    />
-                    <label htmlFor="no_lift_gate">No</label>
-                </div>
-            </div>
-            <div className="form-field" >
-                <div className="form-label optimizedCheckout-form-label">
-                    <strong>{QUESTIONS.requiresDeliveryAppointment}</strong>
-                </div>
-                <div className="flex-centered">
-                    <input 
-                        id="yes_delivery_appointment" 
-                        name="delivery_appointment" 
-                        type="radio" 
-                        value="yes"
-                    />
-                    <label htmlFor="yes_delivery_appointment">Yes</label>
-                </div>
-                <div className="flex-centered">
-                    <input 
-                        id="no_delivery_appointment" 
-                        name="delivery_appointment" 
-                        type="radio" 
-                        value="no"
-                    />
-                    <label htmlFor="no_delivery_appointment">No</label>
-                </div>
-            </div>
-            <div 
-                className="form-field" 
-                id="contact-information-delivery" 
-            >
-                <div className="form-label optimizedCheckout-form-label">
-                    <strong>{QUESTIONS.deliveryAppointmentContactInformation}</strong>
-                </div>
-                <textarea 
-                    className="form-input optimizedCheckout-form-input" 
-                    name="delivery_appointment_contact_information" 
-                    rows={3} />
-            </div>
-            <div className="form-field">
-                <div className="form-label optimizedCheckout-form-label">
-                    <strong>{QUESTIONS.whatAreYourReceivingDaysAndHours}</strong>
-                </div>
-                <textarea 
-                    className="form-input optimizedCheckout-form-input" 
-                    name="receiving_days_hours" 
-                    rows={3} />
-            </div>
-        </div>
+			{props.questions.map((i: any) => ( 
+					<InputForm {...i} 
+						key={i._id} 
+						onChange={onStateChanged}
+						value={state[i._id]} 
+					/>
+				))
+			}
+		</div>
 	</>
 }
 
-export default ShippingMethodQuestionaire;
+export function mapToOrderConfirmationProps(
+	context: CheckoutContextProps,
+) {
+	const {
+		checkoutState: {
+			data: { getConfig, getCart, getCheckout }
+		},
+		checkoutService,
+	} = context;
+
+	console.log(context, 'context');
+
+	const config = getConfig();
+	const checkout = getCheckout();
+	const cart = getCart();
+
+	return {
+		config,
+		cart,
+		checkout,
+		loadOrder: checkoutService.loadOrder,
+		loadCheckout: checkoutService.loadCheckout,
+		updateCheckout: checkoutService.updateCheckout
+	};
+}
+
+export default withCheckout(mapToOrderConfirmationProps)(ShippingMethodQuestionaire);

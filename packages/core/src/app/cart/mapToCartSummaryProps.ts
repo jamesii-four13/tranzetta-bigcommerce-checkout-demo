@@ -17,6 +17,8 @@ export default function mapToCartSummaryProps(
     const customer = getCustomer();
     const redeemableProps = mapToRedeemableProps(context);
 
+    // console.log(checkout, config, redeemableProps, 'mapToCartSummaryProps')
+
     if (!checkout || !config || !redeemableProps || !customer) {
         return null;
     }

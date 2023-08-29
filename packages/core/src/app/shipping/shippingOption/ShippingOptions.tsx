@@ -5,6 +5,7 @@ import { createSelector } from 'reselect';
 import { CheckoutContextProps } from '@bigcommerce/checkout/payment-integration-api';
 
 import { withCheckout } from '../../checkout';
+import { ShippingMethodQuestionaires } from '../../checkout/Checkout';
 import getShippableLineItems from '../getShippableLineItems';
 import getShippingMethodId from '../getShippingMethodId';
 
@@ -14,6 +15,7 @@ export interface ShippingOptionsProps {
     isMultiShippingMode: boolean;
     isUpdatingAddress?: boolean;
     shouldShowShippingOptions: boolean;
+    questionaires: ShippingMethodQuestionaires[];
 }
 
 export interface WithCheckoutShippingOptionsProps {

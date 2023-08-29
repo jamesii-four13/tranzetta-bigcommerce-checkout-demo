@@ -5,6 +5,7 @@ import { CSSTransition } from 'react-transition-group';
 
 import { isMobileView, MobileView } from '../ui/responsive';
 
+import { ShippingMethodQuestionaires } from './Checkout';
 import CheckoutStepHeader from './CheckoutStepHeader';
 import CheckoutStepType from './CheckoutStepType';
 
@@ -19,6 +20,7 @@ export interface CheckoutStepProps {
     type: CheckoutStepType;
     onExpanded?(step: CheckoutStepType): void;
     onEdit?(step: CheckoutStepType): void;
+    questionaires: ShippingMethodQuestionaires[]
 }
 
 export interface CheckoutStepState {
@@ -89,7 +91,6 @@ export default class CheckoutStep extends Component<CheckoutStepProps, CheckoutS
                         {suggestion}
                     </div>
                 )}
-
                 {this.renderContent()}
             </li>
         );
